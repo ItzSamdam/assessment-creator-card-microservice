@@ -246,6 +246,7 @@ function Server(serverConfig = {}) {
         responseComponents.body.message = error.isApplicationError
           ? error.message
           : 'Some error occured.';
+        responseComponents.body.code = error.isApplicationError ? error.errorCode : 'ERR';
         responseComponents.body.errors = error.details || undefined;
         responseComponents.body.data = error.context;
 
@@ -274,14 +275,14 @@ function Server(serverConfig = {}) {
   }
 
   function startServer() {
-    app.use((_, res, __) => {
+    app.use((_req, res) => {
       // Global 404 Catcher
       res.status(404).json({
         status: 'error',
         message: 'Resource not found.',
       });
     });
-    app.use((err, _, res, __) => {
+    app.use((err, _req, res) => {
       appLogger.errorX(err, 'global-500-error');
       // Global 500 Catcher
       res.status(500).json({

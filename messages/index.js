@@ -1,7 +1,7 @@
 const AuthenticationMessages = require('./authentication');
-const CreatorCardMessages = require('./creatorCards')
+const CreatorCardMessages = require('./creator-cards');
 
 module.exports = {
-    AuthenticationMessages,
-    CreatorCardMessages
+  AuthenticationMessages,
+  CreatorCardMessages,
 };

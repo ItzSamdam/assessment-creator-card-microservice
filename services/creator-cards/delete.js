@@ -1,7 +1,8 @@
 const { throwAppError, ERROR_CODE } = require('@app-core/errors');
-const creatorCardRepository = require('@app/repository/creator-card');
+const CreatorCard = require('@app/repository/creator-card');
 const { CreatorCardMessages } = require('@app/messages');
-const { serializeCard } = require('@app/utils/common');
+const validator = require('@app-core/validator');
+const { serializeCard } = require('./utils');
 
 const deleteSpec = validator.parse(`
     root {
@@ -9,40 +10,31 @@ const deleteSpec = validator.parse(`
     }
   `);
 
-async function deleteCreatorCard(serviceData, options = {}) {
-    let response;
+async function deleteCreatorCard(serviceData) {
+  const data = validator.validate(serviceData, deleteSpec);
 
-    const data = validator.validate(serviceData, deleteSpec);
+  const card = await CreatorCard.findOne({ slug: data.slug, deleted: null });
 
-    const { slug, creator_reference } = serviceData;
+  if (!card) {
+    throwAppError(CreatorCardMessages.CARD_NOT_FOUND, ERROR_CODE.NF01);
+  }
 
-    try {
+  if (card.creator_reference !== data.creator_reference) {
+    throwAppError('Creator reference does not match', ERROR_CODE.PERMERR);
+  }
 
-        const card = await creatorCardRepository.findOne({ slug, deleted: null });
+  const now = Date.now();
+  await CreatorCard.updateOne({
+    query: { _id: card._id },
+    updateValues: { deleted: now },
+  });
 
-        if (!card) {
-            throwAppError(CreatorCardMessages.CARD_NOT_FOUND, ERROR_CODE.NF01);
-        }
+  card.deleted = now;
+  card.updated = now;
 
-        if (card.creator_reference != creator_reference) {
-            throwAppError('Creator reference does not match', ERROR_CODE.PERMERR);
-        }
+  const response = card.toJSON();
 
-        const now = Date.now();
-        await creatorCardRepository.updateOne({
-            query: { _id: card._id },
-            updateValues: { deleted: now },
-        });
-
-        card.deleted = now;
-        card.updated = now;
-
-        response = card.toJSON();
-    } catch (error) {
-        throw error;
-    }
-
-    return serializeCard(response);
+  return serializeCard(response);
 }
 
 module.exports = deleteCreatorCard;

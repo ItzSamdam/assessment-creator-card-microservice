@@ -27,10 +27,7 @@ const ENDPOINT_CONFIGS = [
   },
   {
     path: './endpoints/creator-cards/',
-    options: {
-      pathPrefix: '/'
-    }
-  }
+  },
 ];
 
 function logEndpointMetaData(endpointConfigs) {
