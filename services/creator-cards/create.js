@@ -87,22 +87,38 @@ async function createCreatorCard(serviceData) {
   }
   const accessType = data.access_type || 'public';
 
-  if (data.access_code) {
-    throwAppError(CreatorCardMessages.ACCESS_CODE_REQUIRED, ERROR_CODE.AC01);
-  }
+  if (accessType === 'private') {
+    if (!data.access_code) {
+      throwAppError(
+        CreatorCardMessages.ACCESS_CODE_REQUIRED || 'Access code is required for private cards',
+        ERROR_CODE.AC01
+      );
+    }
 
-  if (accessType === 'private' && !data.access_code) {
-    throwAppError(CreatorCardMessages.ACCESS_CODE_REQUIRED, ERROR_CODE.AC01);
+    // Validate access code format
+    if (!/^[a-zA-Z0-9]{6}$/.test(data.access_code)) {
+      throwAppError('Access code must be exactly 6 alphanumeric characters', ERROR_CODE.INVLDDATA, {
+        details: [
+          {
+            field: 'access_code',
+            message: 'Access code must be exactly 6 alphanumeric characters (e.g., A1B2C3)',
+          },
+        ],
+      });
+    }
+  } else if (data.access_code) {
+    throwAppError(
+      CreatorCardMessages.ACCESS_CODE_NOT_ALLOWED || 'Access code cannot be set for public cards',
+      ERROR_CODE.AC05
+    );
   }
-
-  if (accessType === 'public' && data.access_code) {
-    throwAppError(CreatorCardMessages.ACCESS_CODE_NOT_ALLOWED, ERROR_CODE.AC05);
-  }
-
   let { slug } = data;
+
   if (!slug) {
-    slug = generateSlugFromTitle(data.title);
+    // FIX: Added await here
+    slug = await generateSlugFromTitle(data.title);
   } else {
+    // FIX: Added await here
     const unique = await isSlugUnique(slug);
     if (!unique) {
       throwAppError(CreatorCardMessages.SLUG_TAKEN, ERROR_CODE.SL02);
@@ -124,10 +140,7 @@ async function createCreatorCard(serviceData) {
     updated: new Date(),
     deleted: null,
   };
-
-  const card = await CreatorCard(cardData);
-
-  const response = card.toJSON();
+  const response = await CreatorCard.create(cardData);
 
   return serializeCard(response);
 }

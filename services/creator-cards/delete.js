@@ -7,13 +7,20 @@ const { serializeCard } = require('./utils');
 const deleteSpec = validator.parse(`
     root {
         creator_reference string<trim|length:20>
+        slug? string<trim|minLength:5|maxLength:50>
     }
   `);
 
 async function deleteCreatorCard(serviceData) {
-  const data = validator.validate(serviceData, deleteSpec);
+  const { slug } = serviceData.slug; // ✅ This is correct now
+  const data = validator.validate(
+    { slug, creator_reference: serviceData.creator_reference },
+    deleteSpec
+  );
 
-  const card = await CreatorCard.findOne({ slug: data.slug, deleted: null });
+  const card = await CreatorCard.findOne({
+    query: { slug: data.slug, deleted: null },
+  });
 
   if (!card) {
     throwAppError(CreatorCardMessages.CARD_NOT_FOUND, ERROR_CODE.NF01);
@@ -32,9 +39,7 @@ async function deleteCreatorCard(serviceData) {
   card.deleted = now;
   card.updated = now;
 
-  const response = card.toJSON();
-
-  return serializeCard(response);
+  return serializeCard(card);
 }
 
 module.exports = deleteCreatorCard;

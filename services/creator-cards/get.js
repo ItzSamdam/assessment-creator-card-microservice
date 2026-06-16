@@ -24,11 +24,8 @@ async function getCreatorCard(serviceData) {
       throwAppError(CreatorCardMessages.INVALID_ACCESS_CODE, ERROR_CODE.AC04);
     }
   }
-  const cardObject = card.toJSON();
-  // delete cardObject.access_code;
-  const response = cardObject;
 
-  return serializeCard(response);
+  return serializeCard(card);
 }
 
 module.exports = getCreatorCard;

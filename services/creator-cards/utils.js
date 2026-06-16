@@ -8,13 +8,13 @@ const generateSlugFromTitle = async (title) => {
     .replace(/[^a-z0-9-_]/g, '');
 
   let slug = baseSlug;
-  let exists = await CreatorCard.findOne({ slug });
+  let exists = await CreatorCard.findOne({ query: { slug } });
   let counter = 0;
 
   while (exists && counter < 10) {
     const suffix = Math.random().toString(36).substring(2, 8);
     slug = `${baseSlug.slice(0, 40)}-${suffix}`;
-    exists = CreatorCard.findOne({ slug });
+    exists = CreatorCard.findOne({ query: { slug } });
     counter++;
   }
 
